@@ -324,10 +324,10 @@ If further information is required please schedule a Consultation Call via the V
     }
 
     private findingToResult(finding: Finding): Sarif.Result {
-        core.info("Finding Input: " + JSON.stringify(finding));
+        this.msgFunc("Finding Input: " + JSON.stringify(finding));
     
         let finding_details: FindingDetails = finding.finding_details;
-        core.info("Finding Details: " + JSON.stringify(finding_details));
+        this.msgFunc("Finding Details: " + JSON.stringify(finding_details));
     
         // construct flaw location
         let location: Sarif.Location = {
@@ -352,7 +352,7 @@ If further information is required please schedule a Consultation Call via the V
                 }
             ]
         };
-        core.info("Constructed Location: " + JSON.stringify(location));
+        this.msgFunc("Constructed Location: " + JSON.stringify(location));
     
         var flawMatch: PolicyFlawMatch;
         if (finding.flaw_match === undefined) {
@@ -365,18 +365,18 @@ If further information is required please schedule a Consultation Call via the V
         else {
             flawMatch = finding.flaw_match as PolicyFlawMatch;
         }
-        core.info("Flaw Match: " + JSON.stringify(flawMatch));
+        this.msgFunc("Flaw Match: " + JSON.stringify(flawMatch));
     
         let fingerprints: { [key: string]: string } = {
             context_guid: flawMatch.context_guid,
             file_path: flawMatch.file_path,
             procedure: flawMatch.procedure
         };
-        core.info("Fingerprints: " + JSON.stringify(fingerprints));
+        this.msgFunc("Fingerprints: " + JSON.stringify(fingerprints));
     
         // construct the issue
         let ghrank: number = +mapVeracodeSeverityToCVSS(finding_details.severity);
-        core.info("GH Rank: " + ghrank);
+        this.msgFunc("GH Rank: " + ghrank);
     
         let result: Sarif.Result = {
             // get the severity number to name
@@ -389,7 +389,7 @@ If further information is required please schedule a Consultation Call via the V
             ruleId: finding_details.cwe?.id.toString(),
             partialFingerprints: fingerprints
         };
-        core.info("Final Result: " + JSON.stringify(result));
+        this.msgFunc("Final Result: " + JSON.stringify(result));
     
         return result;
     }
