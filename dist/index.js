@@ -29165,7 +29165,7 @@ class Converter {
     }
     convertPolicyScanResults(policyScanResult) {
         this.msgFunc('Policy Scan results file found and parsed - validated JSON file');
-        this.msgFunc('Issues count: ' + policyScanResult._embedded.findings.length);
+        this.msgFunc('Issue count: ' + policyScanResult._embedded.findings.length);
         let rules = policyScanResult._embedded.findings
             .reduce((acc, val) => {
             // dedupe by cwe_id

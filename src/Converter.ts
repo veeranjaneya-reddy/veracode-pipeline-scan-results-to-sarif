@@ -248,7 +248,7 @@ export class Converter {
 
     convertPolicyScanResults(policyScanResult: PolicyScanResult): Sarif.Log {
         this.msgFunc('Policy Scan results file found and parsed - validated JSON file');
-        this.msgFunc('Issues count: ' + policyScanResult._embedded.findings.length);
+        this.msgFunc('Issue count: ' + policyScanResult._embedded.findings.length);
         let rules: Sarif.ReportingDescriptor[] = policyScanResult._embedded.findings
             .reduce((acc, val) => {
                 // dedupe by cwe_id
