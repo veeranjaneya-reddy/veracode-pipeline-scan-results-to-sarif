@@ -324,7 +324,11 @@ If further information is required please schedule a Consultation Call via the V
     }
 
     private findingToResult(finding: Finding): Sarif.Result {
+        core.info("Finding Input: " + JSON.stringify(finding));
+    
         let finding_details: FindingDetails = finding.finding_details;
+        core.info("Finding Details: " + JSON.stringify(finding_details));
+    
         // construct flaw location
         let location: Sarif.Location = {
             physicalLocation: {
@@ -347,28 +351,34 @@ If further information is required please schedule a Consultation Call via the V
                     parentIndex: 0
                 }
             ]
-        }
-        var flawMatch: PolicyFlawMatch
+        };
+        core.info("Constructed Location: " + JSON.stringify(location));
+    
+        var flawMatch: PolicyFlawMatch;
         if (finding.flaw_match === undefined) {
-            var flawMatch: PolicyFlawMatch = {
+            flawMatch = {
                 context_guid: "",
                 file_path: "",
                 procedure: "",
-            }
+            };
         }
         else {
-            var flawMatch: PolicyFlawMatch = finding.flaw_match as PolicyFlawMatch
+            flawMatch = finding.flaw_match as PolicyFlawMatch;
         }
-
+        core.info("Flaw Match: " + JSON.stringify(flawMatch));
+    
         let fingerprints: { [key: string]: string } = {
             context_guid: flawMatch.context_guid,
             file_path: flawMatch.file_path,
             procedure: flawMatch.procedure
-        }
-
+        };
+        core.info("Fingerprints: " + JSON.stringify(fingerprints));
+    
         // construct the issue
-        let ghrank:number = +mapVeracodeSeverityToCVSS(finding_details.severity)
-        return {
+        let ghrank: number = +mapVeracodeSeverityToCVSS(finding_details.severity);
+        core.info("GH Rank: " + ghrank);
+    
+        let result: Sarif.Result = {
             // get the severity number to name
             level: this.config.reportLevels.get(finding_details.severity),
             rank: ghrank,
@@ -379,7 +389,11 @@ If further information is required please schedule a Consultation Call via the V
             ruleId: finding_details.cwe?.id.toString(),
             partialFingerprints: fingerprints
         };
+        core.info("Final Result: " + JSON.stringify(result));
+    
+        return result;
     }
+    
 
     policyResultConvertSarifLog(sarifLog: Sarif.Log): PolicyScanResult {
         let issues: Finding[] = sarifLog.runs
