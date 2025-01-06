@@ -29181,8 +29181,13 @@ class Converter {
         //     .map(findings => this.findingToResult(findings));
         let filteredResults = policyScanResult._embedded.findings
             .filter(finding => {
-            console.log("In filter - finding:", finding);
-            return finding.finding_details.file_path !== undefined;
+            var _a, _b, _c;
+            console.log("Finding details:", {
+                hasFilePath: (_a = finding.finding_details) === null || _a === void 0 ? void 0 : _a.file_path,
+                filePathValue: (_b = finding.finding_details) === null || _b === void 0 ? void 0 : _b.file_path,
+                findingDetails: finding.finding_details
+            });
+            return ((_c = finding.finding_details) === null || _c === void 0 ? void 0 : _c.file_path) !== undefined;
         });
         console.log("After filter - length:", filteredResults.length);
         console.log("First few filtered results:", filteredResults.slice(0, 2));

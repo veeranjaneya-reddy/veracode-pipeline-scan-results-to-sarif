@@ -265,8 +265,12 @@ export class Converter {
         //     .map(findings => this.findingToResult(findings));
         let filteredResults = policyScanResult._embedded.findings
     .filter(finding => {
-        console.log("In filter - finding:", finding);
-        return finding.finding_details.file_path !== undefined;
+        console.log("Finding details:", {
+            hasFilePath: finding.finding_details?.file_path,
+            filePathValue: finding.finding_details?.file_path,
+            findingDetails: finding.finding_details
+        });
+        return finding.finding_details?.file_path !== undefined;
     });
 
         console.log("After filter - length:", filteredResults.length);
