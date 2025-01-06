@@ -29163,133 +29163,61 @@ class Converter {
         }
         throw Error("Flaw fingerprints not set or error parsing SARIF fingerprints");
     }
-    //     convertPolicyScanResults(policyScanResult: PolicyScanResult): Sarif.Log {
-    //         this.msgFunc('Policy Scan results file found and parsed - validated JSON file');
-    //         this.msgFunc('Issue count: ' + policyScanResult._embedded.findings.length);
-    //         let rules: Sarif.ReportingDescriptor[] = policyScanResult._embedded.findings
-    //             .reduce((acc, val) => {
-    //                 // dedupe by cwe_id
-    //                 if (!acc.map(value => value.finding_details.cwe.id).includes(val.finding_details.cwe.id)) {
-    //                     acc.push(val);
-    //                 }
-    //                 return acc;
-    //             }, <Finding[]>[])
-    //             .map(issue => this.findingToRule(issue));
-    //         // convert to SARIF json
-    //         core.info(`Raw Findings: ${JSON.stringify(policyScanResult._embedded.findings)}`);
-    //         let sarifResults: Sarif.Result[] = policyScanResult._embedded.findings
-    //             .filter(finding => {
-    //                 core.info(`Filtering Finding: ${JSON.stringify(finding)}`);
-    //                 return finding.finding_details && finding.finding_details.file_path !== undefined;
-    //             })
-    //             .map(findings => {
-    //                 try {
-    //                     core.info(`Processing Finding: ${JSON.stringify(findings)}`);
-    //                     return this.findingToResult(findings);
-    //                 } catch (error) {
-    //                     core.error(`Error in findingToResult: ${error}`);
-    //                     return null; // Skip processing this finding
-    //                 }
-    //             });
-    //         if (sarifResults.length !== policyScanResult._embedded.findings.length) {
-    //             core.warning(`
-    // #####################
-    // Veracode identified several flaws without correct filenames and line numbers attached to it.
-    // This usually happens if there is no debug information available for the uploaded application.
-    // Please check your uploaded application and the Veracode packaging guidance here https://docs.veracode.com/r/compilation_packaging.
-    // If further information is required please schedule a Consultation Call via the Veracode platform or contact support@veracode.com.
-    // #####################`)
-    //         }
-    //         // construct the full SARIF content
-    //         return {
-    //             $schema: "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
-    //             version: "2.1.0",
-    //             runs: [
-    //                 {
-    //                     tool: {
-    //                         driver: {
-    //                             name: "Veracode Static Analysis Policy Scan",
-    //                             rules: rules
-    //                         }
-    //                     },
-    //                     results: sarifResults
-    //                 }
-    //             ]
-    //         };
-    //     }
     convertPolicyScanResults(policyScanResult) {
-        try {
-            // Log initial processing steps
-            this.msgFunc('Policy Scan results file found and parsed - validated JSON file');
-            this.msgFunc('Issue count: ' + policyScanResult._embedded.findings.length);
-            // Deduplicate findings based on CWE ID and generate rules
-            let rules = policyScanResult._embedded.findings
-                .reduce((acc, val) => {
-                // Dedupe by cwe_id
-                if (!acc.some(item => item.finding_details.cwe.id === val.finding_details.cwe.id)) {
-                    acc.push(val);
-                }
-                return acc;
-            }, [])
-                .map(issue => {
-                core.info(`Creating rule for issue: ${JSON.stringify(issue)}`);
-                return this.findingToRule(issue);
-            });
-            // Log raw findings
-            core.info(`Raw Findings: ${JSON.stringify(policyScanResult._embedded.findings)}`);
-            // Filter and process findings into SARIF results
-            let sarifResults = policyScanResult._embedded.findings
-                .filter(finding => {
-                core.info(`Filtering Finding: ${JSON.stringify(finding)}`);
-                // Ensure findings have valid details
-                return finding.finding_details && finding.finding_details.file_path !== undefined;
-            })
-                .map(finding => {
-                try {
-                    // Process each finding
-                    core.info(`Processing Finding: ${JSON.stringify(finding)}`);
-                    let result = this.findingToResult(finding);
-                    core.info(`Generated SARIF Result: ${JSON.stringify(result)}`);
-                    return result;
-                }
-                catch (error) {
-                    core.error(`Error in findingToResult: ${error}`);
-                    return null; // Skip processing this finding
-                }
-            })
-                .filter(result => result !== null); // Remove any null results
-            // Log warning if findings were skipped
-            if (sarifResults.length !== policyScanResult._embedded.findings.length) {
-                core.warning(`
+        this.msgFunc('Policy Scan results file found and parsed - validated JSON file');
+        this.msgFunc('Issue count: ' + policyScanResult._embedded.findings.length);
+        let rules = policyScanResult._embedded.findings
+            .reduce((acc, val) => {
+            // dedupe by cwe_id
+            if (!acc.map(value => value.finding_details.cwe.id).includes(val.finding_details.cwe.id)) {
+                acc.push(val);
+            }
+            return acc;
+        }, [])
+            .map(issue => this.findingToRule(issue));
+        // convert to SARIF json
+        // let sarifResults: Sarif.Result[] = policyScanResult._embedded.findings
+        //     .filter(finding => finding.finding_details.file_path !== undefined)
+        //     .map(findings => this.findingToResult(findings));
+        let filteredResults = policyScanResult._embedded.findings
+            .filter(finding => {
+            console.log("In filter - finding:", finding);
+            return finding.finding_details.file_path !== undefined;
+        });
+        console.log("After filter - length:", filteredResults.length);
+        console.log("First few filtered results:", filteredResults.slice(0, 2));
+        // Now try the map separately
+        let sarifResults = filteredResults.map(findings => {
+            console.log("In map - processing finding:", findings);
+            return this.findingToResult(findings);
+        });
+        // Check what happened with the mapping
+        console.log("After map - length:", sarifResults === null || sarifResults === void 0 ? void 0 : sarifResults.length);
+        if (sarifResults.length !== policyScanResult._embedded.findings.length) {
+            core.warning(`
 #####################
 Veracode identified several flaws without correct filenames and line numbers attached to it.
 This usually happens if there is no debug information available for the uploaded application.
 Please check your uploaded application and the Veracode packaging guidance here https://docs.veracode.com/r/compilation_packaging.
 If further information is required please schedule a Consultation Call via the Veracode platform or contact support@veracode.com.
 #####################`);
-            }
-            // Construct and return the full SARIF content
-            return {
-                $schema: "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
-                version: "2.1.0",
-                runs: [
-                    {
-                        tool: {
-                            driver: {
-                                name: "Veracode Static Analysis Policy Scan",
-                                rules: rules
-                            }
-                        },
-                        results: sarifResults
-                    }
-                ]
-            };
         }
-        catch (error) {
-            // Log any unexpected errors during processing
-            core.error(`Unexpected error in convertPolicyScanResults: ${error}`);
-            throw error; // Re-throw error for handling upstream
-        }
+        // construct the full SARIF content
+        return {
+            $schema: "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+            version: "2.1.0",
+            runs: [
+                {
+                    tool: {
+                        driver: {
+                            name: "Veracode Static Analysis Policy Scan",
+                            rules: rules
+                        }
+                    },
+                    results: sarifResults
+                }
+            ]
+        };
     }
     findingToRule(finding) {
         var _a, _b, _c, _d, _e;
