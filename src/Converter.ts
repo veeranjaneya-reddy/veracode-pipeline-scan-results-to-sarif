@@ -263,22 +263,16 @@ export class Converter {
         // let sarifResults: Sarif.Result[] = policyScanResult._embedded.findings
         //     .filter(finding => finding.finding_details.file_path !== undefined)
         //     .map(findings => this.findingToResult(findings));
-        let filteredResults = policyScanResult._embedded.findings
-    .filter(finding => {
-        console.log("Finding details:", {
-            hasFilePath: finding.finding_details?.file_path,
-            filePathValue: finding.finding_details?.file_path,
-            findingDetails: finding.finding_details
-        });
-        return finding.finding_details?.file_path !== undefined;
-    });
-
-        console.log("After filter - length:", filteredResults.length);
-        console.log("First few filtered results:", filteredResults.slice(0, 2));
-
-        // Now try the map separately
-        let sarifResults = filteredResults.map(findings => {
-            console.log("In map - processing finding:", findings);
+        let sarifResults: Sarif.Result[] = policyScanResult._embedded.findings
+        .filter(finding => 
+            finding.finding_details.module !== undefined && 
+            finding.finding_details.procedure !== undefined
+        )
+        .map(findings => {
+            // Ensure file_path exists before conversion
+            if (!findings.finding_details.file_path) {
+                findings.finding_details.file_path = `${findings.finding_details.module}/${findings.finding_details.procedure}`;
+            }
             return this.findingToResult(findings);
         });
 
