@@ -260,9 +260,22 @@ export class Converter {
             .map(issue => this.findingToRule(issue));
 
         // convert to SARIF json
+        core.info(`Raw Findings: ${JSON.stringify(policyScanResult._embedded.findings)}`);
         let sarifResults: Sarif.Result[] = policyScanResult._embedded.findings
-            .filter(finding => finding.finding_details.file_path !== undefined)
-            .map(findings => this.findingToResult(findings));
+            .filter(finding => {
+                core.info(`Filtering Finding: ${JSON.stringify(finding)}`);
+                return finding.finding_details && finding.finding_details.file_path !== undefined;
+            })
+            .map(findings => {
+                try {
+                    core.info(`Processing Finding: ${JSON.stringify(findings)}`);
+                    return this.findingToResult(findings);
+                } catch (error) {
+                    core.error(`Error in findingToResult: ${error}`);
+                    return null; // Skip processing this finding
+                }
+            });
+        
 
         if (sarifResults.length !== policyScanResult._embedded.findings.length) {
             core.warning(`
