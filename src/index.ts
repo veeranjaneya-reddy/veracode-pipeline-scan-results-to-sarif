@@ -37,6 +37,11 @@ export function run(opt: Options, msgFunc: (msg: string) => void) {
     let output: Sarif.Log | PipelineScanResult | PolicyScanResult
     try {
         let results: PolicyScanResult | PipelineScanResult | Sarif.Log = JSON.parse(rawData.toString());
+        if ('_embedded' in results) {
+            core.info(`resultCount: ${results._embedded.findings.length}`);
+        } else {
+            core.info('resultCount: 0');
+        }
         if (scanType === 'policy') {
             try {
                 output = converter.convertPolicyScanResults(results as PolicyScanResult)

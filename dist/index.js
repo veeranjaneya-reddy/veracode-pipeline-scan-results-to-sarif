@@ -29165,7 +29165,7 @@ class Converter {
     }
     convertPolicyScanResults(policyScanResult) {
         this.msgFunc('Policy Scan results file found and parsed - validated JSON file');
-        this.msgFunc('Issue count: ' + policyScanResult._embedded.findings.length);
+        this.msgFunc('Issues count: ' + policyScanResult._embedded.findings.length);
         let rules = policyScanResult._embedded.findings
             .reduce((acc, val) => {
             // dedupe by cwe_id
@@ -29176,21 +29176,9 @@ class Converter {
         }, [])
             .map(issue => this.findingToRule(issue));
         // convert to SARIF json
-        // let sarifResults: Sarif.Result[] = policyScanResult._embedded.findings
-        //     .filter(finding => finding.finding_details.file_path !== undefined)
-        //     .map(findings => this.findingToResult(findings));
         let sarifResults = policyScanResult._embedded.findings
-            .filter(finding => finding.finding_details.module !== undefined &&
-            finding.finding_details.procedure !== undefined)
-            .map(findings => {
-            // Ensure file_path exists before conversion
-            if (!findings.finding_details.file_path) {
-                findings.finding_details.file_path = `${findings.finding_details.module}/${findings.finding_details.procedure}`;
-            }
-            return this.findingToResult(findings);
-        });
-        // Check what happened with the mapping
-        console.log("After map - length:", sarifResults === null || sarifResults === void 0 ? void 0 : sarifResults.length);
+            .filter(finding => finding.finding_details.file_path !== undefined)
+            .map(findings => this.findingToResult(findings));
         if (sarifResults.length !== policyScanResult._embedded.findings.length) {
             core.warning(`
 #####################
@@ -29250,9 +29238,7 @@ If further information is required please schedule a Consultation Call via the V
     }
     findingToResult(finding) {
         var _a;
-        this.msgFunc("Finding Input: " + JSON.stringify(finding));
         let finding_details = finding.finding_details;
-        this.msgFunc("Finding Details: " + JSON.stringify(finding_details));
         // construct flaw location
         let location = {
             physicalLocation: {
@@ -29276,29 +29262,25 @@ If further information is required please schedule a Consultation Call via the V
                 }
             ]
         };
-        this.msgFunc("Constructed Location: " + JSON.stringify(location));
         var flawMatch;
         if (finding.flaw_match === undefined) {
-            flawMatch = {
+            var flawMatch = {
                 context_guid: "",
                 file_path: "",
                 procedure: "",
             };
         }
         else {
-            flawMatch = finding.flaw_match;
+            var flawMatch = finding.flaw_match;
         }
-        this.msgFunc("Flaw Match: " + JSON.stringify(flawMatch));
         let fingerprints = {
             context_guid: flawMatch.context_guid,
             file_path: flawMatch.file_path,
             procedure: flawMatch.procedure
         };
-        this.msgFunc("Fingerprints: " + JSON.stringify(fingerprints));
         // construct the issue
         let ghrank = +(0, utils_1.mapVeracodeSeverityToCVSS)(finding_details.severity);
-        this.msgFunc("GH Rank: " + ghrank);
-        let result = {
+        return {
             // get the severity number to name
             level: this.config.reportLevels.get(finding_details.severity),
             rank: ghrank,
@@ -29309,8 +29291,6 @@ If further information is required please schedule a Consultation Call via the V
             ruleId: (_a = finding_details.cwe) === null || _a === void 0 ? void 0 : _a.id.toString(),
             partialFingerprints: fingerprints
         };
-        this.msgFunc("Final Result: " + JSON.stringify(result));
-        return result;
     }
     policyResultConvertSarifLog(sarifLog) {
         let issues = sarifLog.runs
@@ -29545,6 +29525,12 @@ function run(opt, msgFunc) {
     let output;
     try {
         let results = JSON.parse(rawData.toString());
+        if ('_embedded' in results) {
+            core.info(`resultCount: ${results._embedded.findings.length}`);
+        }
+        else {
+            core.info('resultCount: 0');
+        }
         if (scanType === 'policy') {
             try {
                 output = converter.convertPolicyScanResults(results);
